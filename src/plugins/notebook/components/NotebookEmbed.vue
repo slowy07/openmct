@@ -39,12 +39,18 @@ export default {
     components: {
         PopupMenu
     },
-    inject: ['openmct'],
+    inject: ['openmct', 'snapshotContainer'],
     props: {
         embed: {
             type: Object,
             default() {
                 return {};
+            }
+        },
+        isSnapshotContainer: {
+            type: Boolean,
+            default() {
+                return false;
             }
         },
         removeActionString: {
@@ -185,6 +191,14 @@ export default {
             if (!fullSizeImageObjectIdentifier) {
                 // legacy image data stored in embed
                 this.openSnapshotOverlay(this.embed.snapshot.src);
+
+                return;
+            }
+
+            if (this.isSnapshotContainer) {
+                const snapshot = this.snapshotContainer.getSnapshot(this.embed.id);
+                const fullSizeImageURL = snapshot.notebookImageDomainObject.configuration.fullSizeImageURL;
+                this.openSnapshotOverlay(fullSizeImageURL);
 
                 return;
             }
