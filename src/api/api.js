@@ -59,6 +59,6 @@ define([
         StatusAPI: StatusAPI.default,
         TelemetryAPI: TelemetryAPI,
         TimeAPI: TimeAPI,
-        TypeRegistry: TypeRegistry,
+        TypeRegistry: TypeRegistry
     };
 });
