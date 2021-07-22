@@ -127,7 +127,7 @@ import FontStyleEditor from '@/ui/inspector/styles/FontStyleEditor.vue';
 import StyleEditor from "./StyleEditor.vue";
 import PreviewAction from "@/ui/preview/PreviewAction.js";
 import { getApplicableStylesForItem, getConsolidatedStyleValues, getConditionSetIdentifierForItem } from "@/plugins/condition/utils/styleUtils";
-import ConditionSetSelectorDialog from "@/plugins/condition/components/inspector/ConditionSetSelectorDialog.vue";
+import SelectorDialogTree from '@/ui/components/SelectorDialogTree.vue';
 import ConditionError from "@/plugins/condition/components/ConditionError.vue";
 import ConditionDescription from "@/plugins/condition/components/ConditionDescription.vue";
 import Vue from 'vue';
@@ -558,10 +558,10 @@ export default {
             }
 
             let vm = new Vue({
+                components: { SelectorDialogTree },
                 provide: {
                     openmct: this.openmct
                 },
-                components: {ConditionSetSelectorDialog},
                 data() {
                     return {
                         handleItemSelection

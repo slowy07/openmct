@@ -101,12 +101,12 @@
 <script>
 
 import StyleEditor from "./StyleEditor.vue";
-import ConditionSetSelectorDialog from "./ConditionSetSelectorDialog.vue";
+import SelectorDialogTree from '@/ui/components/SelectorDialogTree.vue';
 import ConditionDescription from "@/plugins/condition/components/ConditionDescription.vue";
 import ConditionError from "@/plugins/condition/components/ConditionError.vue";
 import Vue from 'vue';
 import PreviewAction from "@/ui/preview/PreviewAction.js";
-import {getApplicableStylesForItem} from "@/plugins/condition/utils/styleUtils";
+import { getApplicableStylesForItem } from "@/plugins/condition/utils/styleUtils";
 import isEmpty from 'lodash/isEmpty';
 
 export default {
@@ -240,10 +240,10 @@ export default {
             }
 
             let vm = new Vue({
+                components: { SelectorDialogTree },
                 provide: {
                     openmct: this.openmct
                 },
-                components: {ConditionSetSelectorDialog},
                 data() {
                     return {
                         handleItemSelection
