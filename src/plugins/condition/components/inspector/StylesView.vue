@@ -541,7 +541,7 @@ export default {
         addConditionSet() {
             let conditionSetDomainObject;
             let self = this;
-            function handleItemSelection(item) {
+            function handleItemSelection({ item }) {
                 if (item) {
                     conditionSetDomainObject = item;
                 }
@@ -567,7 +567,7 @@ export default {
                         handleItemSelection
                     };
                 },
-                template: '<SelectorDialogTree @conditionSetSelected="handleItemSelection"></SelectorDialogTree>'
+                template: '<SelectorDialogTree @treeItemSelected="handleItemSelection"></SelectorDialogTree>'
             }).$mount();
 
             let overlay = this.openmct.overlays.overlay({
