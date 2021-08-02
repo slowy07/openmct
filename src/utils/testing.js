@@ -24,6 +24,11 @@ import MCT from 'MCT';
 
 let nativeFunctions = [];
 let mockObjects = setMockObjects();
+let openmct;
+let readyCallback;
+let timeSystemKey;
+let start;
+let end;
 
 const TIME_SYSTEM_OPTIONS = {
     timeSystemKey: 'utc',
@@ -33,14 +38,47 @@ const TIME_SYSTEM_OPTIONS = {
     }
 };
 
+export function waitForRouter(done) {
+    readyCallback = done;
+
+    return () => {
+        openmct.router.on('change:hash', checkHash);
+    };
+}
+
+function checkHash() {
+    const isValid = validateHash();
+    if (isValid) {
+        openmct.router.removeListener('change:hash', checkHash);
+        readyCallback();
+        readyCallback = undefined;
+    }
+}
+
+function validateHash() {
+    const hash = window.location.hash;
+
+    return hash.split('=').length === 6
+        && hash.includes(`tc.timeSystem=${timeSystemKey}`)
+        && hash.includes(`tc.startBound=${start}`)
+        && hash.includes(`tc.endBound=${end}`)
+        && hash.includes(`tc.mode=fixed`)
+        && hash.includes(`view=grid`)
+        && !hash.includes(`hideInspector`)
+        && !hash.includes(`hideTree`)
+    ;
+}
+
 export function createOpenMct(timeSystemOptions = TIME_SYSTEM_OPTIONS) {
-    const openmct = new MCT();
+    window.location.hash = '#';
+
+    openmct = new MCT();
     openmct.install(openmct.plugins.LocalStorage());
     openmct.install(openmct.plugins.UTCTimeSystem());
 
-    const timeSystemKey = timeSystemOptions.timeSystemKey;
-    const start = timeSystemOptions.bounds.start;
-    const end = timeSystemOptions.bounds.end;
+    timeSystemKey = timeSystemOptions.timeSystemKey;
+    start = timeSystemOptions.bounds.start;
+    end = timeSystemOptions.bounds.end;
 
     openmct.time.timeSystem(timeSystemKey, {
         start,
@@ -78,7 +116,7 @@ export function clearBuiltinSpies() {
     nativeFunctions = [];
 }
 
-export function resetApplicationState(openmct) {
+export function resetApplicationState() {
     let promise;
 
     clearBuiltinSpies();
@@ -90,6 +128,7 @@ export function resetApplicationState(openmct) {
     if (window.location.hash !== '#' && window.location.hash !== '') {
         promise = new Promise((resolve, reject) => {
             window.addEventListener('hashchange', cleanup);
+            openmct.router.setHash('');
             window.location.hash = '#';
 
             function cleanup() {
@@ -100,6 +139,8 @@ export function resetApplicationState(openmct) {
     } else {
         promise = Promise.resolve();
     }
+
+    openmct = undefined;
 
     return promise;
 }
