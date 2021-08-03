@@ -27,7 +27,6 @@ describe('Application router utility functions', () => {
     });
 
     afterEach(() => {
-        openmct.router.setHash('');
         appHolder.remove();
 
         return resetApplicationState(openmct);

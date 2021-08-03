@@ -120,6 +120,7 @@ export function resetApplicationState() {
     let promise;
 
     clearBuiltinSpies();
+    openmct.router.setHash('');
 
     if (openmct !== undefined) {
         openmct.destroy();
