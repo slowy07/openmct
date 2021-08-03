@@ -290,7 +290,7 @@ describe("The Imagery View Layout", () => {
             expect(imageInfo.url.indexOf(imageTelemetry[COUNT - 1].timeId)).not.toEqual(-1);
         });
 
-        xit("should show the clicked thumbnail as the main image", (done) => {
+        it("should show the clicked thumbnail as the main image", (done) => {
             const target = imageTelemetry[5].url;
             parent.querySelectorAll(`img[src='${target}']`)[0].click();
             Vue.nextTick(() => {
@@ -301,7 +301,7 @@ describe("The Imagery View Layout", () => {
             });
         });
 
-        xit("should show that an image is new", (done) => {
+        it("should show that an image is new", (done) => {
             Vue.nextTick(() => {
                 // used in code, need to wait to the 500ms here too
                 setTimeout(() => {
@@ -324,7 +324,7 @@ describe("The Imagery View Layout", () => {
             });
         });
 
-        xit("should navigate via arrow keys", (done) => {
+        it("should navigate via arrow keys", (done) => {
             let keyOpts = {
                 element: parent.querySelector('.c-imagery'),
                 key: 'ArrowLeft',
@@ -372,6 +372,7 @@ describe("The Imagery View Layout", () => {
                 done();
             });
         });
+
         it ('shows an auto scroll button when scroll to left', async () => {
             // to mock what a scroll would do
             imageryView._getInstance().$refs.ImageryLayout.autoScroll = false;
@@ -379,6 +380,7 @@ describe("The Imagery View Layout", () => {
             let autoScrollButton = parent.querySelector('.c-imagery__auto-scroll-resume-button');
             expect(autoScrollButton).toBeTruthy();
         });
+
         it ('scrollToRight is called when clicking on auto scroll button', async () => {
             // use spyon to spy the scroll function
             spyOn(imageryView._getInstance().$refs.ImageryLayout, 'scrollToRight');
