@@ -24,9 +24,11 @@ import Vue from 'vue';
 import {
     createOpenMct,
     resetApplicationState,
-    simulateKeyEvent
+    simulateKeyEvent,
+    waitForRouter
 } from 'utils/testing';
 
+const CLOCK = 'local';
 const ONE_MINUTE = 1000 * 60;
 const TEN_MINUTES = ONE_MINUTE * 10;
 const MAIN_IMAGE_CLASS = '.js-imageryView-image';
@@ -84,12 +86,21 @@ function generateTelemetry(start, count) {
     return telemetry;
 }
 
+function validateHash(timeSystemKey, start, end) {
+    const hash = window.location.hash;
+
+    return hash.split('=').length === 5
+        && hash.includes(`tc.timeSystem=${timeSystemKey}`)
+        && hash.includes(`tc.startDelta=${TEN_MINUTES}`)
+        && hash.includes(`tc.endDelta=${ONE_MINUTE}`)
+        && hash.includes(`tc.mode=${CLOCK}`)
+    ;
+}
+
 describe("The Imagery View Layout", () => {
     const imageryKey = 'example.imagery';
     const START = Date.now();
     const COUNT = 10;
-
-    let resolveFunction;
 
     let openmct;
     let appHolder;
@@ -200,17 +211,24 @@ describe("The Imagery View Layout", () => {
         appHolder.style.width = '640px';
         appHolder.style.height = '480px';
 
-        openmct = createOpenMct();
+        const timeSystemOptions = {
+            clock: CLOCK,
+            timeSystemKey: 'utc',
+            bounds: {
+                start: TEN_MINUTES,
+                end: ONE_MINUTE
+            }
+        };
+
+        openmct = createOpenMct(timeSystemOptions);
 
         openmct.install(openmct.plugins.MyItems());
-        openmct.install(openmct.plugins.LocalTimeSystem());
-        openmct.install(openmct.plugins.UTCTimeSystem());
 
         parent = document.createElement('div');
         child = document.createElement('div');
         parent.appendChild(child);
 
-        // document.querySelector('body').append(parent);
+        appHolder.append(parent);
 
         spyOn(window, 'ResizeObserver').and.returnValue({
             observe() {},
@@ -220,16 +238,11 @@ describe("The Imagery View Layout", () => {
         spyOn(openmct.telemetry, 'request').and.returnValue(Promise.resolve([]));
         spyOn(openmct.objects, 'get').and.returnValue(Promise.resolve(imageryObject));
 
-        openmct.on('start', done);
+        openmct.on('start', waitForRouter(done, validateHash));
         openmct.start(appHolder);
     });
 
     afterEach(() => {
-        openmct.time.timeSystem('utc', {
-            start: 0,
-            end: 1
-        });
-
         return resetApplicationState(openmct);
     });
 
@@ -268,9 +281,6 @@ describe("The Imagery View Layout", () => {
         });
 
         afterEach(() => {
-            openmct.time.stopClock();
-            openmct.router.removeListener('change:hash', resolveFunction);
-
             imageryView.destroy();
         });
 
@@ -375,8 +385,8 @@ describe("The Imagery View Layout", () => {
             imageryView._getInstance().$refs.ImageryLayout.autoScroll = false;
             await Vue.nextTick();
             parent.querySelector('.c-imagery__auto-scroll-resume-button').click();
-            expect(imageryView._getInstance().$refs.ImageryLayout.scrollToRight).toHaveBeenCalledWith('reset');
 
+            expect(imageryView._getInstance().$refs.ImageryLayout.scrollToRight).toHaveBeenCalledWith('reset');
         });
     });
 });

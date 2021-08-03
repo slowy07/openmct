@@ -22,15 +22,8 @@
 
 import MCT from 'MCT';
 
-let nativeFunctions = [];
-let mockObjects = setMockObjects();
-let openmct;
-let readyCallback;
-let timeSystemKey;
-let start;
-let end;
-
 const TIME_SYSTEM_OPTIONS = {
+    clock: 'fixed',
     timeSystemKey: 'utc',
     bounds: {
         start: 0,
@@ -38,41 +31,29 @@ const TIME_SYSTEM_OPTIONS = {
     }
 };
 
-export function waitForRouter(done) {
+let nativeFunctions = [];
+let mockObjects = setMockObjects();
+let openmct;
+let readyCallback;
+let timeSystemKey;
+let validate;
+let start;
+let end;
+
+export function waitForRouter(done, validateHashFunc) {
     readyCallback = done;
+    validate = validateHashFunc;
 
     return () => {
         openmct.router.on('change:hash', checkHash);
     };
 }
 
-function checkHash() {
-    const isValid = validateHash();
-    if (isValid) {
-        openmct.router.removeListener('change:hash', checkHash);
-        readyCallback();
-        readyCallback = undefined;
-    }
-}
-
-function validateHash() {
-    const hash = window.location.hash;
-
-    return hash.split('=').length === 6
-        && hash.includes(`tc.timeSystem=${timeSystemKey}`)
-        && hash.includes(`tc.startBound=${start}`)
-        && hash.includes(`tc.endBound=${end}`)
-        && hash.includes(`tc.mode=fixed`)
-        && hash.includes(`view=grid`)
-        && !hash.includes(`hideInspector`)
-        && !hash.includes(`hideTree`)
-    ;
-}
-
 export function createOpenMct(timeSystemOptions = TIME_SYSTEM_OPTIONS) {
     window.location.hash = '#';
 
     openmct = new MCT();
+
     openmct.install(openmct.plugins.LocalStorage());
     openmct.install(openmct.plugins.UTCTimeSystem());
 
@@ -80,10 +61,7 @@ export function createOpenMct(timeSystemOptions = TIME_SYSTEM_OPTIONS) {
     start = timeSystemOptions.bounds.start;
     end = timeSystemOptions.bounds.end;
 
-    openmct.time.timeSystem(timeSystemKey, {
-        start,
-        end
-    });
+    setClock(timeSystemOptions.clock);
 
     return openmct;
 }
@@ -122,6 +100,11 @@ export function resetApplicationState() {
     clearBuiltinSpies();
     openmct.router.setHash('');
 
+    readyCallback = undefined;
+    timeSystemKey = undefined;
+    start = undefined;
+    end = undefined;
+
     if (openmct !== undefined) {
         openmct.destroy();
     }
@@ -129,7 +112,6 @@ export function resetApplicationState() {
     if (window.location.hash !== '#' && window.location.hash !== '') {
         promise = new Promise((resolve, reject) => {
             window.addEventListener('hashchange', cleanup);
-            openmct.router.setHash('');
             window.location.hash = '#';
 
             function cleanup() {
@@ -390,4 +372,56 @@ function setMockObjects() {
             example: {}
         }
     };
+}
+
+function checkHash() {
+    const isValid = validate
+        ? validate(timeSystemKey, start, end)
+        : validateHash();
+    if (isValid) {
+        openmct.router.removeListener('change:hash', checkHash);
+        readyCallback();
+        readyCallback = undefined;
+    }
+}
+
+function setClock(clock = 'fixed') {
+    if (clock === 'fixed') {
+        setFixedClock();
+    } else {
+        openmct.time.timeSystem(timeSystemKey, {
+            start: Date.now() - start,
+            end: Date.now() + end
+        });
+
+        setLocalClock();
+    }
+}
+
+function setFixedClock() {
+    openmct.time.timeSystem(timeSystemKey, {
+        start,
+        end
+    });
+}
+
+function setLocalClock() {
+    openmct.time.clock('local', {
+        start: -start,
+        end
+    });
+}
+
+function validateHash() {
+    const hash = window.location.hash;
+
+    return hash.split('=').length === 6
+        && hash.includes(`tc.timeSystem=${timeSystemKey}`)
+        && hash.includes(`tc.startBound=${start}`)
+        && hash.includes(`tc.endBound=${end}`)
+        && hash.includes(`tc.mode=fixed`)
+        && hash.includes(`view=grid`)
+        && !hash.includes(`hideInspector`)
+        && !hash.includes(`hideTree`)
+    ;
 }
