@@ -98,6 +98,7 @@ export function resetApplicationState() {
     let promise;
 
     clearBuiltinSpies();
+    openmct.time.stopClock();
     openmct.router.setHash('');
 
     readyCallback = undefined;
