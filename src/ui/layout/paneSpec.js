@@ -22,15 +22,13 @@
 
 import {
     createOpenMct,
-    resetApplicationState
+    resetApplicationState,
+    waitForRouter
 } from 'utils/testing';
 
 describe("the pane", () => {
     let openmct;
     let appHolder;
-    let element;
-    let child;
-    let resolveFunction;
 
     beforeEach((done) => {
         openmct = createOpenMct();
@@ -40,28 +38,30 @@ describe("the pane", () => {
         appHolder.style.height = '480px';
 
         openmct = createOpenMct();
-        openmct.install(openmct.plugins.MyItems());
         openmct.install(openmct.plugins.LocalTimeSystem());
         openmct.install(openmct.plugins.UTCTimeSystem());
 
-        element = document.createElement('div');
-        child = document.createElement('div');
-        element.appendChild(child);
-
-        openmct.on('start', done);
+        openmct.on('start', waitForRouter(done, validateHash));
         openmct.start(appHolder);
 
         document.body.append(appHolder);
-
     });
 
     afterEach(() => {
         return resetApplicationState(openmct);
     });
-    it('toggling tree will toggle tree hide params', (done) => {
+
+    it('toggling tree will toggle tree hide params', () => {
         document.querySelector('.l-shell__pane-tree .l-pane__collapse-button').click();
         expect(openmct.router.getSearchParam('hideTree')).toBe('true');
-        done();
+    });
+
+    it('toggling inspector will toggle inspector hide params', (done) => {
+        document.querySelector('.l-shell__pane-inspector .l-pane__collapse-button').click();
+        setTimeout(() => {
+            expect(openmct.router.getSearchParam('hideInspector')).toBe('true');
+            done();
+        }, 350);
     });
 
     it('tree pane collapses when adding hide tree param in URL', () => {
@@ -73,18 +73,15 @@ describe("the pane", () => {
         openmct.router.setSearchParam('hideInspector', 'true');
         expect(document.querySelector('.l-shell__pane-inspector.l-pane--collapsed')).toBeDefined();
     });
-
-    it('toggle inspector pane will toggle inspector hide param', (done) => {
-        // There's a short delay on addubg the param.
-        resolveFunction = () => {
-            setTimeout(() => {
-                expect(openmct.router.getSearchParam('hideInspector')).toBe('true');
-                done();
-            }, 500);
-        };
-
-        openmct.router.on('change:params', resolveFunction);
-        document.querySelector('.l-shell__pane-inspector .l-pane__collapse-button').click();
-    });
-
 });
+
+function validateHash(timeSystemKey, start, end) {
+    const hash = window.location.hash;
+
+    return hash.split('=').length === 5
+        && hash.includes(`tc.timeSystem=${timeSystemKey}`)
+        && hash.includes(`tc.startBound=${start}`)
+        && hash.includes(`tc.endBound=${end}`)
+        && hash.includes(`tc.mode=fixed`)
+    ;
+}
